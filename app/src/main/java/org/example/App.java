@@ -18,7 +18,7 @@ public class App{
 
     public static void main(String[] args) throws IOException{
         //Takes in input image as a buffered image
-        BufferedImage bi = ImageIO.read(new File("/home/user/Downloads/Depth-Anything-V2/assets/examples/demo08.jpg"));
+        BufferedImage bi = ImageIO.read(new File("/home/jaydeniyoha/Downloads/bots.jpg"));
 
         //converts image to an int array with 3 color channels
         int[][][] image = new int[3][bi.getHeight()][bi.getWidth()];
@@ -38,7 +38,7 @@ public class App{
             for(int r = 0; r < image[0].length; ++r)
                 for(int c = 0; c < image[0][0].length; ++c)
                 {
-                    imageNew[0][channel][r][c] = image[channel][r][c];
+                    imageNew[0][channel][r][c] = image[channel][r][c]/255.0f;
                 }
                     
         try {
@@ -47,11 +47,9 @@ public class App{
             OrtSession session;
             OnnxTensor test;
             SessionOptions options = new OrtSession.SessionOptions();
-            options.setOptimizationLevel(OptLevel.BASIC_OPT);
+            options.setOptimizationLevel(OptLevel.ALL_OPT);
 
-            session = env.createSession("/home/user/Downloads/Depth-Anything-ONNX/metric_dynamic_model.onnx", options);
-            System.out.println("Input: " + session.getInputInfo());
-            System.out.println("Output: " + session.getOutputInfo());
+            session = env.createSession("/home/jaydeniyoha/Downloads/Depth-Anything-ONNX/metric_dynamic_model.onnx", options);
             test = OnnxTensor.createTensor(env, imageNew);
             OrtSession.Result output = session.run(Collections.singletonMap("image", test));
 
@@ -75,33 +73,53 @@ public class App{
 
             //Create empty buffered image
             BufferedImage bim = new BufferedImage(outputNums[0][0].length, outputNums[0].length, BufferedImage.TYPE_INT_RGB);
-            BufferedImage biInput = new BufferedImage(imageNew[0][0][0].length, imageNew[0][0].length, BufferedImage.TYPE_INT_RGB);
+            // BufferedImage biInput = new BufferedImage(imageNew[0][0][0].length, imageNew[0][0].length, BufferedImage.TYPE_INT_RGB);
             
             //Fill image with grayscaled pixels
-            for(int r = 0; r < outputNums[0].length; ++r)
+            for(int r = 0; r < outputNums[0].length; ++r){
                 for(int c = 0; c < outputNums[0][0].length; ++c){
-                    int num = Math.round((outputNums[0][r][c] - min)/(max-min) * 255);
-                    int rgb = ((int) num << 16) | ((int) num << 8) | (int) num;
+                    int num = Math.round((outputNums[0][r][c] - min)/(max-min) * 255.0f);
+                    int rgb = (num << 16) | (num << 8) | num;
                     bim.setRGB(c, r, rgb);
                 }
+            }
+                
+
+            // int correctN = 0;
+
+            // for(int r = 0; r < outputNums[0].length; ++r){
+            //     for(int c = 0; c < outputNums[0][0].length; ++c){
+            //         int num = (bim.getRGB(c,r) >> 16) & 0xFF;
+            //         float actual = (num/255.0f)*(max-min)+min;
+
+            //         if(actual >= Math.floor(outputNums[0][r][c]) && actual <= Math.ceil(outputNums[0][r][c]))
+            //             correctN++;
+            //     }
+            // }
+                
+
+            // float percentCorrect = 100f * correctN / (outputNums[0].length * outputNums[0][0].length);
+            // System.out.println(percentCorrect);
                     
             //just testing to know what we gave to the model
-            for(int r = 0; r < imageNew[0][0].length; ++r)
-                for(int c = 0; c < imageNew[0][0][0].length; ++c)
-            {    //sets up objects used for models as just class varialbles, because we just need one instance of the model
-                int rgb = (Math.round(imageNew[0][0][r][c]) << 16) | (Math.round(imageNew[0][1][r][c]) << 8) | Math.round(imageNew[0][2][r][c]);
-                biInput.setRGB(c, r, rgb);
-            }
+            // for(int r = 0; r < imageNew[0][0].length; ++r)
+            //     for(int c = 0; c < imageNew[0][0][0].length; ++c)
+            // {    //sets up objects used for models as just class varialbles, because we just need one instance of the model
+            //     int rgb = (Math.round(imageNew[0][0][r][c]) << 16) | (Math.round(imageNew[0][1][r][c]) << 8) | Math.round(imageNew[0][2][r][c]);
+            //     biInput.setRGB(c, r, rgb);
+            // }
             
             //We save these new images as files
-            File outputF = new File("/home/user/Downloads/depth_map.png");
-            File inputF = new File("/home/user/Downloads/input_2_model.png");
+            File outputF = new File("/home/jaydeniyoha/Downloads/depth_map3.png");
+            // File inputF = new File("/home/jaydeniyoha/Downloads/input_2_model.png");
             
             ImageIO.write(bim, "png", outputF);
-            ImageIO.write(biInput, "png", inputF);
+            // ImageIO.write(biInput, "png", inputF);
                 
         } catch (OrtException e) {
             throw new RuntimeException(e);
         }
     }
+
+    public String getGreeting(){ return "Hello, this works.";}
 }
